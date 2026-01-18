@@ -1,17 +1,23 @@
 "use client";
 
 import { useRef, useState } from "react";
+import type { ComponentProps } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
+import type { ThreeElements } from "@react-three/fiber";
 import { Points, PointMaterial, Float, Stars } from "@react-three/drei";
-// @ts-ignore
+import type { Mesh, Points as ThreePoints } from "three";
+// @ts-expect-error -- maath random package does not provide proper types
 import * as random from "maath/random/dist/maath-random.esm";
 
-function ParticleCloud(props: any) {
-    const ref = useRef<any>(null);
+type PointsProps = ComponentProps<typeof Points>;
+type MeshProps = ThreeElements["mesh"];
+
+function ParticleCloud(props: PointsProps) {
+    const ref = useRef<ThreePoints>(null);
     // Generate 2000 random points in a sphere
     const [sphere] = useState(() => random.inSphere(new Float32Array(2000 * 3), { radius: 1.5 }));
 
-    useFrame((state, delta) => {
+    useFrame((_, delta) => {
         if (ref.current) {
             ref.current.rotation.x -= delta / 10;
             ref.current.rotation.y -= delta / 15;
@@ -33,10 +39,10 @@ function ParticleCloud(props: any) {
     );
 }
 
-function Core(props: any) {
-    const ref = useRef<any>(null);
+function Core(props: MeshProps) {
+    const ref = useRef<Mesh>(null);
 
-    useFrame((state, delta) => {
+    useFrame((state) => {
         if (ref.current) {
             const t = state.clock.getElapsedTime();
             ref.current.scale.x = 1 + Math.sin(t * 2) * 0.1;

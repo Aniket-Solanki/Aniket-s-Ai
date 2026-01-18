@@ -1,9 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Copy, Check, Code as CodeIcon, RotateCw, Maximize2 } from "lucide-react";
+import { X, Copy, Check, Code as CodeIcon } from "lucide-react";
 import { useState } from "react";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { cn } from "@/lib/utils";
 
 interface ArtifactPanelProps {
     isOpen: boolean;

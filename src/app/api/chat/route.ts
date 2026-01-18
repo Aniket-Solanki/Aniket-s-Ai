@@ -11,6 +11,11 @@ const MODELS = {
     LAST_RESORT: "gemini-pro-latest"      // High-intelligence fallback
 };
 
+const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) return error.message;
+    return String(error);
+};
+
 function logServer(message: string) {
     const timestamp = new Date().toISOString();
     const cleanMsg = message.replace(/\n/g, ' ');
@@ -63,7 +68,7 @@ export async function POST(req: Request) {
         }
 
         const modelsToTry = [MODELS.PRIMARY, MODELS.FALLBACK, MODELS.LAST_RESORT];
-        let lastError: any = null;
+        let lastError: unknown = null;
 
         // --- Hydra Protocol Loop ---
         for (const model of modelsToTry) {
@@ -100,23 +105,24 @@ export async function POST(req: Request) {
 
                     return result.toTextStreamResponse();
 
-                } catch (error: any) {
+                } catch (error: unknown) {
                     lastError = error;
+                    const errorMessage = getErrorMessage(error);
                     const isRetryable =
-                        error.message.includes("429") ||
-                        error.message.includes("403") ||
-                        error.message.includes("503") ||
-                        error.message.includes("quota") ||
-                        error.message.includes("fetch failed"); // Network blip
+                        errorMessage.includes("429") ||
+                        errorMessage.includes("403") ||
+                        errorMessage.includes("503") ||
+                        errorMessage.includes("quota") ||
+                        errorMessage.includes("fetch failed"); // Network blip
 
-                    logServer(`[Failure] Model: ${model} | Key: ${keyFingerprint} | Error: ${error.message}`);
+                    logServer(`[Failure] Model: ${model} | Key: ${keyFingerprint} | Error: ${errorMessage}`);
 
                     if (isRetryable) {
                         logServer(`[Hydra] Retryable error. Rotating key...`);
                         continue;
                     } else {
                         // Fallback for weird errors
-                        if (error.message.includes("400")) {
+                        if (errorMessage.includes("400")) {
                             // If bad request, we bubble it up unless it's model-specific (e.g. 2.0 experimental feature not supp)
                             // For now, assume 400 is user error OR model mismatch. 
                             // Let's rotate anyway just in case it's a specific key permission issue.
@@ -129,10 +135,10 @@ export async function POST(req: Request) {
             logServer(`[Hydra] Model ${model} failed on ALL keys.`);
         }
 
-        throw new Error(`Hydra Exhaustion: ${lastError?.message}`);
+        throw new Error(`Hydra Exhaustion: ${getErrorMessage(lastError)}`);
 
-    } catch (error: any) {
-        logServer(`FATAL: ${error.message}`);
+    } catch (error: unknown) {
+        logServer(`FATAL: ${getErrorMessage(error)}`);
         return new Response(JSON.stringify({
             error: "CortexAlpha is currently overloaded. Please try again."
         }), { status: 503 });

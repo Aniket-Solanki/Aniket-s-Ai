@@ -1,8 +1,10 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Menu, Plus, Upload, X, MoreHorizontal, MoreVertical, MessageSquare, Trash2, Edit2, Pin, ChevronRight, Sparkles, Code, PenTool, Lightbulb, BarChart3, PanelLeftClose, PanelLeftOpen, Settings as SettingsIcon, Maximize2, Copy, ThumbsUp, ThumbsDown, RefreshCw, Square, ChevronDown, ArrowDown, Zap, FileText, FileCode, FileImage, File as FileIcon, Download, Image } from "lucide-react";
+import { Send, Plus, Upload, X, MoreVertical, MessageSquare, Trash2, Edit2, Pin, Code, PenTool, Lightbulb, BarChart3, PanelLeftClose, PanelLeftOpen, Settings as SettingsIcon, Maximize2, Copy, ThumbsUp, ThumbsDown, RefreshCw, Square, ArrowDown, FileText, FileCode, FileImage, File as FileIcon, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
+import Image from "next/image";
 import { SpotlightCard } from "./spotlight-card";
 import { WireframeGlobe } from "./globe";
 import ReactMarkdown from 'react-markdown';
@@ -15,6 +17,12 @@ import { SettingsModal } from "./SettingsModal";
 import { ArtifactPanel } from "./ArtifactPanel";
 import { useIsMobile } from "../../hooks/use-mobile";
 import { EmptyStateLite } from "./empty-state-lite";
+
+type MarkdownCodeProps = {
+    inline?: boolean;
+    className?: string;
+    children?: ReactNode;
+} & HTMLAttributes<HTMLElement>;
 
 export default function ChatInterface() {
     const isMobile = useIsMobile();
@@ -33,7 +41,6 @@ export default function ChatInterface() {
     // Sidebar Actions State
     const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
     const [editTitle, setEditTitle] = useState("");
-    const [hoveredSessionId, setHoveredSessionId] = useState<string | null>(null);
     const [sidebarSearch, setSidebarSearch] = useState("");
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
@@ -59,8 +66,6 @@ export default function ChatInterface() {
     const [error, setError] = useState<Error | null>(null);
     const [fileAttachments, setFileAttachments] = useState<FileAttachment[]>([]);
     const [showScrollButton, setShowScrollButton] = useState(false);
-    const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-    const [editMessageContent, setEditMessageContent] = useState("");
     const [isDragging, setIsDragging] = useState(false);
     const [previewFile, setPreviewFile] = useState<FileAttachment | null>(null);
     const isNearBottomRef = useRef(true);
@@ -106,7 +111,7 @@ export default function ChatInterface() {
     }, [input]);
 
     const activeSession = getActiveSession();
-    const messages = activeSession?.messages || [];
+    const messages = useMemo(() => activeSession?.messages ?? [], [activeSession]);
 
     // Process files into FileAttachment objects
     const processFiles = useCallback(async (files: FileList | File[]) => {
@@ -236,6 +241,9 @@ export default function ChatInterface() {
                     : m.content
             }));
 
+            const controller = new AbortController();
+            abortControllerRef.current = controller;
+
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -246,11 +254,8 @@ export default function ChatInterface() {
                         temperature: settings.temperature
                     }
                 }),
+                signal: controller.signal,
             });
-
-            // Store abort controller for cancellation
-            abortControllerRef.current = new AbortController();
-            const signal = abortControllerRef.current.signal;
 
             if (!response.ok) throw new Error("Connection failed");
             if (!response.body) throw new Error("No signal received");
@@ -430,8 +435,6 @@ export default function ChatInterface() {
                                 .map(session => (
                                     <div
                                         key={session.id}
-                                        onMouseEnter={() => setHoveredSessionId(session.id)}
-                                        onMouseLeave={() => setHoveredSessionId(null)}
                                         onClick={() => {
                                             if (editingSessionId !== session.id) {
                                                 setCurrentSession(session.id);
@@ -586,7 +589,7 @@ export default function ChatInterface() {
                                 onClick={() => setIsSettingsOpen(true)}
                                 className="w-full flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors text-left group"
                             >
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-500 to-indigo-500 flex items-center justify-center text-xs font-bold text-white shadow-lg group-hover:shadow-violet-500/30 transition-shadow">
+                                <div className="w-8 h-8 rounded-full bg-linear-to-tr from-violet-500 to-indigo-500 flex items-center justify-center text-xs font-bold text-white shadow-lg group-hover:shadow-violet-500/30 transition-shadow">
                                     OA
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -693,20 +696,20 @@ export default function ChatInterface() {
                                         {/* Dual Counter-Rotating Rings (Gyroscope Effect) */}
                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                             {/* Ring 1 - Horizontalish (Clockwise) */}
-                                            <motion.div
-                                                className="absolute w-[120%] h-[120%] md:w-[600px] md:h-[300px] rounded-[100%] border border-cyan-400/40 border-dashed"
+                                                <motion.div
+                                                    className="absolute w-[120%] h-[120%] md:w-150 md:h-75 rounded-[100%] border border-cyan-400/40 border-dashed"
                                                 animate={{ rotate: 360 }}
                                                 transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
                                             />
                                             {/* Ring 2 - Verticalish (Counter-Clockwise) */}
-                                            <motion.div
-                                                className="absolute w-[120%] h-[120%] md:w-[300px] md:h-[600px] rounded-[100%] border border-violet-400/40 border-dashed"
+                                                <motion.div
+                                                    className="absolute w-[120%] h-[120%] md:w-75 md:h-150 rounded-[100%] border border-violet-400/40 border-dashed"
                                                 animate={{ rotate: -360 }}
                                                 transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
                                             />
                                         </div>
 
-                                        <h1 className="relative text-3xl md:text-5xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 pb-2 filter drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                                        <h1 className="relative text-3xl md:text-5xl font-bold tracking-tight text-transparent bg-clip-text bg-linear-to-b from-white to-white/60 pb-2 filter drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">
                                             CortexAlpha
                                         </h1>
                                     </motion.div>
@@ -757,7 +760,7 @@ export default function ChatInterface() {
                                                 <SpotlightCard
                                                     className={cn(
                                                         "h-full rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10 transition-colors cursor-pointer active:scale-95 duration-200",
-                                                        isMobile ? "min-w-[240px] p-3 flex flex-col items-start gap-2" : "p-4 flex flex-col items-start gap-3"
+                                                        isMobile ? "min-w-60 p-3 flex flex-col items-start gap-2" : "p-4 flex flex-col items-start gap-3"
                                                     )}
                                                 >
                                                     <div
@@ -802,7 +805,15 @@ export default function ChatInterface() {
                                             {msg.images && msg.images.length > 0 && (
                                                 <div className="flex flex-wrap gap-2 mb-3">
                                                     {msg.images.map((img, i) => (
-                                                        <img key={i} src={img} alt="attachment" className="max-h-64 rounded-xl border border-white/10" />
+                                                        <Image
+                                                            key={i}
+                                                            src={img}
+                                                            alt="attachment"
+                                                            width={512}
+                                                            height={512}
+                                                            unoptimized
+                                                            className="max-h-64 w-auto rounded-xl border border-white/10"
+                                                        />
                                                     ))}
                                                 </div>
                                             )}
@@ -810,15 +821,15 @@ export default function ChatInterface() {
                                             {msg.role === "assistant" ? (
                                                 <ReactMarkdown
                                                     components={{
-                                                        code({ node, inline, className, children, ...props }: any) {
+                                                        code({ inline, className, children, ...props }: MarkdownCodeProps) {
                                                             const match = /language-(\w+)/.exec(className || '')
                                                             const language = match ? match[1] : 'text';
                                                             const content = String(children).replace(/\n$/, '');
 
                                                             return !inline && match ? (
-                                                                <div className="relative group my-6 rounded-xl overflow-hidden border border-white/[0.08] bg-[#1e1e1e] shadow-lg">
+                                                                <div className="relative group my-6 rounded-xl overflow-hidden border border-white/8 bg-[#1e1e1e] shadow-lg">
                                                                     {/* Terminal Header */}
-                                                                    <div className="flex items-center justify-between px-4 py-2.5 bg-white/[0.03] border-b border-white/[0.05]">
+                                                                    <div className="flex items-center justify-between px-4 py-2.5 bg-white/3 border-b border-white/5">
                                                                         <div className="flex items-center gap-2">
                                                                             <div className="flex gap-1.5">
                                                                                 <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56] opacity-80" />
@@ -1005,7 +1016,7 @@ export default function ChatInterface() {
                     <div className="max-w-5xl mx-auto w-full pointer-events-auto">
                         <form
                             onSubmit={(e) => handleSubmit(e)}
-                            className="glass-panel input-glow rounded-[2rem] p-2 transition-all duration-300 focus-within:bg-black/60 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+                            className="glass-panel input-glow rounded-4xl p-2 transition-all duration-300 focus-within:bg-black/60 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
                         >
                             {/* File Attachments Preview */}
                             <AnimatePresence>
@@ -1026,13 +1037,20 @@ export default function ChatInterface() {
                                                         className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-2 pr-3 cursor-pointer hover:bg-white/10 transition-colors"
                                                     >
                                                         {isImage ? (
-                                                            <img src={file.data} className="h-10 w-10 object-cover rounded-lg" alt={file.name} />
+                                                            <Image
+                                                                src={file.data}
+                                                                alt={file.name}
+                                                                width={40}
+                                                                height={40}
+                                                                unoptimized
+                                                                className="h-10 w-10 object-cover rounded-lg"
+                                                            />
                                                         ) : (
                                                             <div className="h-10 w-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
                                                                 <IconComponent size={18} className="text-violet-400" />
                                                             </div>
                                                         )}
-                                                        <div className="max-w-[100px]">
+                                                        <div className="max-w-25">
                                                             <div className="text-xs text-white truncate">{file.name}</div>
                                                             <div className="text-[10px] text-zinc-500">{formatFileSize(file.size)}</div>
                                                         </div>
@@ -1076,7 +1094,7 @@ export default function ChatInterface() {
                                     onKeyDown={handleKeyDown}
                                     onPaste={handlePaste}
                                     placeholder={isMobile ? "Ask CortexAlpha..." : "Ask CortexAlpha... (paste images with Ctrl+V)"}
-                                    className="flex-1 bg-transparent border-none outline-none text-zinc-100 placeholder:text-zinc-600 py-3.5 max-h-[150px] min-h-[52px] resize-none overflow-y-auto font-medium"
+                                    className="flex-1 bg-transparent border-none outline-none text-zinc-100 placeholder:text-zinc-600 py-3.5 max-h-37.5 min-h-13 resize-none overflow-y-auto font-medium"
                                     rows={1}
                                     disabled={isLoading}
                                 />
@@ -1182,9 +1200,12 @@ export default function ChatInterface() {
                             {/* Content */}
                             <div className="bg-zinc-900 rounded-b-xl overflow-hidden">
                                 {previewFile.type.startsWith('image/') ? (
-                                    <img
+                                    <Image
                                         src={previewFile.data}
                                         alt={previewFile.name}
+                                        width={1024}
+                                        height={1024}
+                                        unoptimized
                                         className="max-w-full max-h-[70vh] object-contain mx-auto"
                                     />
                                 ) : previewFile.type.includes('text') || previewFile.type.includes('javascript') || previewFile.type.includes('json') ? (

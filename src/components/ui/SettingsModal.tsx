@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { X, Settings, Thermometer, BrainCircuit, Download, FileJson, FileText } from "lucide-react";
+import { X, Settings, Thermometer, BrainCircuit, FileJson, FileText } from "lucide-react";
 import { useChatStore } from "@/store/chat-store";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -106,7 +106,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                         className="w-full h-32 bg-black/30 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:ring-1 focus:ring-violet-500/50 resize-none placeholder:text-zinc-600"
                                     />
                                     <p className="text-xs text-zinc-500">
-                                        These instructions will be prepended to every conversation, guiding the AI's behavior.
+                                        These instructions will be prepended to every conversation, guiding the AI&apos;s behavior.
                                     </p>
                                 </div>
 

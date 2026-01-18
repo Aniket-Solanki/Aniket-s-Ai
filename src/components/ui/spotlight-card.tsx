@@ -23,7 +23,7 @@ export const SpotlightCard = ({
     }: ReactMouseEvent) {
         if (isMobile) return;
 
-        let { left, top } = currentTarget.getBoundingClientRect();
+        const { left, top } = currentTarget.getBoundingClientRect();
 
         mouseX.set(clientX - left);
         mouseY.set(clientY - top);
@@ -52,7 +52,7 @@ export const SpotlightCard = ({
             {/* Mobile fallback static gradient */}
             <div className={cn(
                 "pointer-events-none absolute -inset-px rounded-xl opacity-0 transition duration-300 md:hidden",
-                isMobile && "opacity-100 bg-gradient-to-br from-violet-500/10 to-transparent"
+                isMobile && "opacity-100 bg-linear-to-br from-violet-500/10 to-transparent"
             )}
             />
 
