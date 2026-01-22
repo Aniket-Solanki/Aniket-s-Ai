@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
-    const baseUrl = 'https://cortex-alpha.vercel.app' // TODO: Update this to your actual domain
+    const baseUrl = 'https://aniket-ai001.vercel.app'
 
     return {
         rules: {

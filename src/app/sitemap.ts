@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-    const baseUrl = 'https://cortex-alpha.vercel.app' // TODO: Update this to your actual domain
+    const baseUrl = 'https://aniket-ai001.vercel.app'
 
     return [
         {
