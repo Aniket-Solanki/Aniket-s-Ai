@@ -9,6 +9,9 @@ const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: '--font-mon
 export const metadata: Metadata = {
   title: "CortexAlpha | Neural Interface",
   description: "Advanced AI Orchestration Interface",
+  verification: {
+    google: "JiIAf4YNBJ4dc32L_ZplGjN0J7_hDD5jTBgJKlib9AI",
+  },
 };
 
 export const viewport: Viewport = {
